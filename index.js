@@ -1,4 +1,5 @@
 var express = require('express');
+var cors = require('cors');
 var compression = require('compression');
 
 var config = require('./config.json');
@@ -7,6 +8,7 @@ var db = require('./database.js');
 var app = express();
 app.use(compression());
 app.use(express.json());
+app.use(cors());
 
 /* API setup */
 
