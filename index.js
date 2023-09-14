@@ -21,6 +21,7 @@ app.delete('/utils/ping', utils.ping);
 var canvas = require('./api/canvas.js');
 app.get('/canvas/list', canvas.list);
 app.get('/canvas/fetch/:id', canvas.fetch);
+app.get('/canvas/history/:id/:offset', canvas.history);
 
 let listen_port = process.env.PORT || config.fallback_port;
 app.listen(listen_port, function() {
