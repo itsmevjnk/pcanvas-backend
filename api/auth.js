@@ -62,15 +62,16 @@ module.exports = {
         else {
             let query_str = '';
             if(req.cookies.token !== undefined && parseInt(req.cookies.id) === id)
-                query_str = "SELECT user_name AS user, email, (user_id IN (SELECT user_id FROM " + config.database.prefix + "auth WHERE auth_id = '" + req.cookies.token + "')) AS login FROM " + config.database.prefix + "users WHERE user_id = " + id;
+                query_str = "SELECT user_name AS user, email, moderator, (user_id IN (SELECT user_id FROM " + config.database.prefix + "auth WHERE auth_id = '" + req.cookies.token + "')) AS login FROM " + config.database.prefix + "users WHERE user_id = " + id;
             else
-                query_str = "SELECT user_name AS user, email FROM " + config.database.prefix + "users WHERE user_id = " + id;
+                query_str = "SELECT user_name AS user, email, moderator FROM " + config.database.prefix + "users WHERE user_id = " + id;
             db.query(query_str, function(err, result, fields) {
                 if(err) resp.status(500).send(template(null, s_err + ''));
                 else if(result.length == 0) resp.status(404).send(template(null, 'Invalid user ID'));
                 else {
                     let payload = {
-                        "user": result[0].user
+                        "user": result[0].user,
+                        "moderator": (result[0].moderator == 1)
                     };
                     // console.log(result[0].login)
                     if(result[0].login === 1) payload.email = result[0].email;
