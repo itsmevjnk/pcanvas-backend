@@ -12,7 +12,7 @@ module.exports = {
         // console.log(user, password);
         
         /* retrieve user id and match password */
-        db.query("SELECT user_id AS id, pswd_hash AS password FROM " + config.database.prefix + "users WHERE user_name = '" + user + "' OR email = '" + user.toLowerCase() + "'", function(u_err, u_result, u_fields) {
+        db.query("SELECT user_id AS id, user_name AS user, pswd_hash AS password FROM " + config.database.prefix + "users WHERE user_name = '" + user + "' OR email = '" + user.toLowerCase() + "'", function(u_err, u_result, u_fields) {
             if(u_err) resp.status(500).send(template(null, u_err + ''));
             else if(u_result.length == 0 || u_result[0].password != password) resp.status(400).send(template(null, 'Invalid credentials'));
             else {
@@ -32,7 +32,8 @@ module.exports = {
                             db.query("INSERT INTO " + config.database.prefix + "auth (auth_id, user_id, ip, user_agent) VALUES ('" + uuid + "', " + u_result[0].id + ", '" + req.ip + "', '" + ua.substring(0, 256) + "')", function(i_err, i_result, i_fields) {
                                 if(i_err) resp.status(500).send(template(null, i_err + ''));
                                 else resp.send(template({
-                                    "token": uuid
+                                    "token": uuid,
+                                    "user": u_result[0].user
                                 }));
                             });
                         }
