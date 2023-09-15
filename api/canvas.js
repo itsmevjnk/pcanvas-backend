@@ -112,7 +112,8 @@ module.exports = {
                                 if(p_err) resp.status(500).send(template(null, p_err + ''));
                                 else resp.send(template({
                                     "offset": req.body.offset,
-                                    "color": req.body.color
+                                    "color": req.body.color,
+                                    "timer": config.cooldown_timer
                                 }));
                             });
                         });
