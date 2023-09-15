@@ -20,7 +20,7 @@ module.exports = {
         // console.log(user, password);
         
         /* retrieve user id and match password */
-        db.query("SELECT user_id AS id, user_name AS user, pswd_hash AS password FROM " + config.database.prefix + "users WHERE user_name = '" + user + "' OR email = '" + user.toLowerCase() + "'", function(u_err, u_result, u_fields) {
+        db.query("SELECT user_id AS id, user_name AS user, pswd_hash AS password, moderator FROM " + config.database.prefix + "users WHERE user_name = '" + user + "' OR email = '" + user.toLowerCase() + "'", function(u_err, u_result, u_fields) {
             if(u_err) resp.status(500).send(template(null, u_err + ''));
             else if(u_result.length == 0 || u_result[0].password != password) resp.status(403).send(template(null, 'Invalid credentials'));
             else {
@@ -42,7 +42,8 @@ module.exports = {
                                 else resp.send(template({
                                     "token": uuid,
                                     "user": u_result[0].user,
-                                    "id": u_result[0].id
+                                    "id": u_result[0].id,
+                                    "moderator": (u_result[0].moderator == 1)
                                 }));
                             });
                         }
