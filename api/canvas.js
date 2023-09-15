@@ -13,9 +13,15 @@ module.exports = {
     },
 
     fetch: function(req, resp) {
-        let id = parseInt(req.params.id);
-        if(isNaN(id)) resp.status(400).send(template(null, 'Invalid canvas ID'));
-        db.query("SELECT tab_name FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(id_err, id_result, id_fields) {
+        let query_params = '';
+        if(req.params.id === 'latest')
+            query_params = "ORDER BY c_date DESC LIMIT 1";
+        else {
+            let id = parseInt(req.params.id);
+            if(isNaN(id)) resp.status(400).send(template(null, 'Invalid canvas ID'));
+            query_params = "WHERE canvas_id = " + id;
+        }
+        db.query("SELECT canvas_id AS id, tab_name FROM " + config.database.prefix + "canvas_list " + query_params, function(id_err, id_result, id_fields) {
             if(id_err) resp.status(500).send(template(null, id_err + ''));
             else if(id_result.length == 0) resp.status(400).send(template(null, 'Invalid canvas ID'));
             else {
@@ -24,7 +30,7 @@ module.exports = {
                 // console.log(start);
                 db.query("SELECT c.offset, c.color FROM " + name + " c, (SELECT offset, max(p_time) AS p_time FROM " + name + " GROUP BY offset) lt WHERE c.offset = lt.offset AND c.p_time = lt.p_time" + ((start !== '') ? (" AND c.p_time > '" + start + "'") : ""), function(p_err, p_result, p_fields) {
                     if(p_err) resp.status(500).send(template(null, p_err + ''));
-                    else resp.send(template(p_result));
+                    else resp.send(template(p_result, (req.params.id === 'latest') ? id_result[0].id : null));
                 });
             }
         });
