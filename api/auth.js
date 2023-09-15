@@ -6,9 +6,9 @@ var crypto = require('node:crypto');
 module.exports = {
     verify_login: function(cookies, callback) {
         if(cookies.id === undefined || cookies.token === undefined) callback(false);
-        else db.query("SELECT user_id FROM " + config.database.prefix + "auth WHERE user_id = " + cookies.id + " AND auth_id = '" + cookies.token + "'", function(err, result, fields) {
+        else db.query("SELECT a.user_id, u.moderator FROM " + config.database.prefix + "auth a JOIN " + config.database.prefix + "users u ON a.user_id = u.user_id WHERE a.user_id = " + cookies.id + " AND a.auth_id = '" + cookies.token + "'", function(err, result, fields) {
             if(err) throw err;
-            else callback((result.length > 0));
+            else callback((result.length > 0), ((result.length > 0) && (result[0].moderator == 1)));
         });
     },
 
@@ -76,7 +76,7 @@ module.exports = {
                     };
                     // console.log(result[0].login)
                     if(result[0].login === 1) payload.email = result[0].email;
-                    resp.send(payload);
+                    resp.send(template(payload));
                 }
             });
         }

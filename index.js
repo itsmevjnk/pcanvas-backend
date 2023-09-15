@@ -9,7 +9,7 @@ var db = require('./database.js');
 var app = express();
 app.use(compression());
 app.use(express.json());
-app.use(cors());
+app.use(cors({credentials: true}));
 app.use(cookie_parser());
 
 /* API setup */

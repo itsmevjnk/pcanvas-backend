@@ -72,7 +72,7 @@ module.exports = {
     check_cooldown: fn_check_cooldown,
 
     cooldown: function(req, resp) {
-        auth.verify_login(req.cookies, (valid) => {
+        auth.verify_login(req.cookies, (valid, moderator) => {
             if(!valid) resp.status(401).send(template(null, 'Not logged in'));
             else {
                 let id = parseInt(req.params.id);
@@ -81,9 +81,9 @@ module.exports = {
                     if(id_err) resp.status(500).send(template(null, id_err + ''));
                     else if(id_result.length == 0) resp.status(404).send(template(null, 'Invalid canvas ID'));
                     else fn_check_cooldown(id_result[0].tab_name, id, (timer) => {
-                        resp.send({
+                        resp.send(template({
                             "timer": timer
-                        });
+                        }));
                     });
                 });
             }
@@ -91,7 +91,7 @@ module.exports = {
     },
 
     place: function(req, resp) {
-        auth.verify_login(req.cookies, (valid) => {
+        auth.verify_login(req.cookies, (valid, moderator) => {
             if(!valid) resp.status(401).send(template(null, 'Not logged in'));
             else {
                 if(req.body.offset === undefined || req.body.color === undefined) resp.status(400).send(template(null, 'Insufficient data'));
@@ -113,7 +113,7 @@ module.exports = {
                                 else resp.send(template({
                                     "offset": req.body.offset,
                                     "color": req.body.color,
-                                    "timer": config.cooldown_timer
+                                    "timer": (moderator) ? 0 : config.cooldown_timer
                                 }));
                             });
                         });
