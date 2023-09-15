@@ -22,10 +22,10 @@ app.delete('/utils/ping', utils.ping);
 
 var canvas = require('./api/canvas.js');
 app.get('/canvas/list', canvas.list);
-app.get('/canvas/fetch/:id', canvas.fetch);
-app.get('/canvas/history/:id/:offset', canvas.history);
-app.get('/canvas/cooldown/:id', canvas.cooldown);
-app.put('/canvas/place/:id', canvas.place);
+app.get('/canvas/:id/fetch', canvas.fetch);
+app.get('/canvas/:id/history/:offset', canvas.history);
+app.get('/canvas/:id/cooldown', canvas.cooldown);
+app.put('/canvas/:id/place', canvas.place);
 
 var auth = require('./api/auth.js');
 app.put('/auth/login', auth.login);
