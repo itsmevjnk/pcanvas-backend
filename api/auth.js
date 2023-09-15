@@ -22,7 +22,7 @@ module.exports = {
                     var uuid = crypto.randomUUID();
                     // console.log('Searching for existing token', uuid);
                     /* check if UUID already exists */
-                    db.query("SELECT auth_id FROM " + config.database.prefix + "auth WHERE auth_id = '" + uuid + "'", function(s_err, s_result, s_fields) {
+                    db.query("SELECT auth_id FROM " + config.database.prefix + "auth WHERE auth_id = '" + uuid + "' AND user_id = " + u_result[0].id, function(s_err, s_result, s_fields) {
                         if(s_err) resp.status(500).send(template(null, s_err + ''));
                         else if(s_result.length > 0) handle_token_search();
                         else {
@@ -33,7 +33,8 @@ module.exports = {
                                 if(i_err) resp.status(500).send(template(null, i_err + ''));
                                 else resp.send(template({
                                     "token": uuid,
-                                    "user": u_result[0].user
+                                    "user": u_result[0].user,
+                                    "id": u_result[0].id
                                 }));
                             });
                         }
@@ -42,5 +43,32 @@ module.exports = {
                 handle_token_search();
             }
         });
+    },
+
+    query: function(req, resp) {
+        let id = NaN;
+        if(req.params.id !== undefined) id = parseInt(req.params.id);
+        else if(req.cookies.id !== undefined) id = parseInt(req.cookies.id);
+
+        if(isNaN(id)) resp.status(400).send(template(null, 'Valid ID not given'));
+        else {
+            let query_str = '';
+            if(req.cookies.token !== undefined && parseInt(req.cookies.id) === id)
+                query_str = "SELECT user_name AS user, email, (user_id IN (SELECT user_id FROM " + config.database.prefix + "auth WHERE auth_id = '" + req.cookies.token + "')) AS login FROM " + config.database.prefix + "users WHERE user_id = " + id;
+            else
+                query_str = "SELECT user_name AS user, email FROM " + config.database.prefix + "users WHERE user_id = " + id;
+            db.query(query_str, function(err, result, fields) {
+                if(err) resp.status(500).send(template(null, s_err + ''));
+                else if(result.length == 0) resp.status(400).send(template(null, 'Invalid user ID'));
+                else {
+                    let payload = {
+                        "user": result[0].user
+                    };
+                    console.log(result[0].login)
+                    if(result[0].login === 1) payload.email = result[0].email;
+                    resp.send(payload);
+                }
+            });
+        }
     }
 };

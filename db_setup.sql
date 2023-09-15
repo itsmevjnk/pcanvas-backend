@@ -26,7 +26,7 @@ CREATE TABLE pc_auth (
     user_agent          VARCHAR(255), -- may need truncating to fit
     c_date              TIMESTAMP       NOT NULL    DEFAULT         (CURRENT_TIMESTAMP),
 
-    PRIMARY KEY         (auth_id),
+    PRIMARY KEY         (auth_id, user_id),
     FOREIGN KEY         (user_id)       REFERENCES  pc_users        (user_id)
 );
 
