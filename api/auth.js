@@ -64,7 +64,7 @@ module.exports = {
                     let payload = {
                         "user": result[0].user
                     };
-                    console.log(result[0].login)
+                    // console.log(result[0].login)
                     if(result[0].login === 1) payload.email = result[0].email;
                     resp.send(payload);
                 }
