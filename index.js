@@ -24,6 +24,8 @@ var canvas = require('./api/canvas.js');
 app.get('/canvas/list', canvas.list);
 app.get('/canvas/fetch/:id', canvas.fetch);
 app.get('/canvas/history/:id/:offset', canvas.history);
+app.get('/canvas/cooldown/:id', canvas.cooldown);
+app.put('/canvas/place/:id', canvas.place);
 
 var auth = require('./api/auth.js');
 app.put('/auth/login', auth.login);

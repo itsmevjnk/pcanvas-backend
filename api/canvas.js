@@ -1,6 +1,18 @@
 var template = require('./template.js');
 var config = require('../config.json');
 var db = require('../database.js');
+var auth = require('./auth.js');
+
+var fn_check_cooldown = function(tab_name, id, callback) {
+    db.query("SELECT p_time FROM " + tab_name + " ORDER BY p_time DESC LIMIT 1", function(p_err, p_result, p_fields) {
+        if(p_err) throw err;
+        else db.query("SELECT moderator FROM " + config.database.prefix + "users WHERE user_id = " + id, function(m_err, m_result, m_fields) {
+            if(m_err) throw err;
+            else if(m_result[0].moderator == 1) callback(0);
+            else callback(Math.max(0, (new Date(p_result[0].p_time).getTime() - Date.now()) / 1000 + config.cooldown_timer));
+        });
+    });
+};
 
 module.exports = {
     list: function(req, resp) {
@@ -44,7 +56,7 @@ module.exports = {
         db.query("SELECT tab_name, width, height FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(id_err, id_result, id_fields) {
             if(id_err) resp.status(500).send(template(null, id_err + ''));
             else if(id_result.length == 0) resp.status(404).send(template(null, 'Invalid canvas ID'));
-            else if(offset >= id_result[0].width * id_result[0].height) resp.status(404).send(template(null, 'Invalid offset'));
+            else if(offset < 0 || offset >= id_result[0].width * id_result[0].height) resp.status(404).send(template(null, 'Invalid offset'));
             else {
                 let name = id_result[0].tab_name;
                 let depth = (req.query.depth === undefined) ? NaN : parseFloat(req.query.depth);
@@ -53,6 +65,59 @@ module.exports = {
                     if(p_err) resp.status(500).send(template(null, p_err + ''));
                     else resp.send(template(p_result));
                 });
+            }
+        });
+    },
+
+    check_cooldown: fn_check_cooldown,
+
+    cooldown: function(req, resp) {
+        auth.verify_login(req.cookies, (valid) => {
+            if(!valid) resp.status(401).send(template(null, 'Not logged in'));
+            else {
+                let id = parseInt(req.params.id);
+                if(isNaN(id)) resp.status(400).send(template(null, 'Invalid canvas ID'));
+                else db.query("SELECT tab_name, width, height FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(id_err, id_result, id_fields) {
+                    if(id_err) resp.status(500).send(template(null, id_err + ''));
+                    else if(id_result.length == 0) resp.status(404).send(template(null, 'Invalid canvas ID'));
+                    else fn_check_cooldown(id_result[0].tab_name, id, (timer) => {
+                        resp.send({
+                            "timer": timer
+                        });
+                    });
+                });
+            }
+        });
+    },
+
+    place: function(req, resp) {
+        auth.verify_login(req.cookies, (valid) => {
+            if(!valid) resp.status(401).send(template(null, 'Not logged in'));
+            else {
+                if(req.body.offset === undefined || req.body.color === undefined) resp.status(400).send(template(null, 'Insufficient data'));
+                else if(typeof req.body.offset !== 'number' || typeof req.body.color !== 'number') resp.status(400).send(template(null, 'Invalid data'));
+                else if(req.body.color < 0 || req.body.color > 15) resp.status(400).send(template(null, 'Invalid color'));
+                else {
+                    let id = parseInt(req.params.id);
+                    if(isNaN(id)) resp.status(400).send(template(null, 'Invalid canvas ID'));
+                    else db.query("SELECT tab_name, width, height FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(id_err, id_result, id_fields) {
+                        if(id_err) resp.status(500).send(template(null, id_err + ''));
+                        else if(id_result.length == 0) resp.status(404).send(template(null, 'Invalid canvas ID'));
+                        else if(req.body.offset < 0 || req.body.offset >= id_result[0].width * id_result[0].height) resp.status(404).send(template(null, 'Invalid offset'));
+                        else fn_check_cooldown(id_result[0].tab_name, id, (timer) => {
+                            if(timer > 0) resp.status(403).send(template({
+                                "timer": timer
+                            }, 'User is under cooldown'));
+                            else db.query("INSERT INTO " + id_result[0].tab_name + " (offset, color, user_id) VALUES (" + req.body.offset + ", " + req.body.color + ", " + req.cookies.id + ")", function(p_err, p_result, p_fields) {
+                                if(p_err) resp.status(500).send(template(null, p_err + ''));
+                                else resp.send(template({
+                                    "offset": req.body.offset,
+                                    "color": req.body.color
+                                }));
+                            });
+                        });
+                    });
+                }
             }
         });
     }

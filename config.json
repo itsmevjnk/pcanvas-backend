@@ -7,5 +7,7 @@
         "prefix": "pc_"
     },
 
+    "cooldown_timer": 15,
+
     "fallback_port": 8000
 }
