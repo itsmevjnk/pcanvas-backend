@@ -23,7 +23,7 @@ module.exports = {
         }
         db.query("SELECT canvas_id AS id, tab_name FROM " + config.database.prefix + "canvas_list " + query_params, function(id_err, id_result, id_fields) {
             if(id_err) resp.status(500).send(template(null, id_err + ''));
-            else if(id_result.length == 0) resp.status(400).send(template(null, 'Invalid canvas ID'));
+            else if(id_result.length == 0) resp.status(404).send(template(null, 'Invalid canvas ID'));
             else {
                 let name = id_result[0].tab_name;
                 let start = (req.query.start === undefined || isNaN(parseFloat(req.query.start))) ? '' : new Date(parseFloat(req.query.start) * 1000).toISOString();
@@ -43,8 +43,8 @@ module.exports = {
         if(isNaN(offset)) resp.status(400).send(template(null, 'Invalid offset'));
         db.query("SELECT tab_name, width, height FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(id_err, id_result, id_fields) {
             if(id_err) resp.status(500).send(template(null, id_err + ''));
-            else if(id_result.length == 0) resp.status(400).send(template(null, 'Invalid canvas ID'));
-            else if(offset >= id_result[0].width * id_result[0].height) resp.status(400).send(template(null, 'Invalid offset'));
+            else if(id_result.length == 0) resp.status(404).send(template(null, 'Invalid canvas ID'));
+            else if(offset >= id_result[0].width * id_result[0].height) resp.status(404).send(template(null, 'Invalid offset'));
             else {
                 let name = id_result[0].tab_name;
                 let depth = (req.query.depth === undefined) ? NaN : parseFloat(req.query.depth);

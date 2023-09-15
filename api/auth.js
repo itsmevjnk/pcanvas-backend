@@ -4,6 +4,14 @@ var db = require('../database.js');
 var crypto = require('node:crypto');
 
 module.exports = {
+    verify_login: function(cookies, callback) {
+        if(cookies.id === undefined || cookies.token === undefined) callback(false);
+        else db.query("SELECT user_id FROM " + config.database.prefix + "auth WHERE user_id = " + cookies.id + " AND auth_id = '" + cookies.token + "'", function(err, result, fields) {
+            if(err) throw err;
+            else callback((result.length > 0));
+        });
+    },
+
     login: function(req, resp) {
         if(req.body.user === undefined || req.body.password === undefined)
             resp.status(400).send(template(null, 'Insufficient credentials'));
@@ -14,7 +22,7 @@ module.exports = {
         /* retrieve user id and match password */
         db.query("SELECT user_id AS id, user_name AS user, pswd_hash AS password FROM " + config.database.prefix + "users WHERE user_name = '" + user + "' OR email = '" + user.toLowerCase() + "'", function(u_err, u_result, u_fields) {
             if(u_err) resp.status(500).send(template(null, u_err + ''));
-            else if(u_result.length == 0 || u_result[0].password != password) resp.status(400).send(template(null, 'Invalid credentials'));
+            else if(u_result.length == 0 || u_result[0].password != password) resp.status(404).send(template(null, 'Invalid credentials'));
             else {
                 /* valid credentials, so let's create a token */
                 var uuid = ''; // will be populated
@@ -59,7 +67,7 @@ module.exports = {
                 query_str = "SELECT user_name AS user, email FROM " + config.database.prefix + "users WHERE user_id = " + id;
             db.query(query_str, function(err, result, fields) {
                 if(err) resp.status(500).send(template(null, s_err + ''));
-                else if(result.length == 0) resp.status(400).send(template(null, 'Invalid user ID'));
+                else if(result.length == 0) resp.status(404).send(template(null, 'Invalid user ID'));
                 else {
                     let payload = {
                         "user": result[0].user
