@@ -23,6 +23,9 @@ app.get('/canvas/list', canvas.list);
 app.get('/canvas/fetch/:id', canvas.fetch);
 app.get('/canvas/history/:id/:offset', canvas.history);
 
+var auth = require('./api/auth.js');
+app.put('/auth/login', auth.login);
+
 let listen_port = process.env.PORT || config.fallback_port;
 app.listen(listen_port, function() {
     console.log('Listening on port', listen_port);
