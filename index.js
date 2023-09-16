@@ -31,6 +31,7 @@ var auth = require('./api/auth.js');
 app.put('/auth/login', auth.login);
 app.get('/auth/query', auth.query); // using ID in cookies
 app.get('/auth/query/:id', auth.query); // using externally supplied ID
+app.delete('/auth/logout', auth.logout);
 
 let listen_port = process.env.PORT || config.fallback_port;
 app.listen(listen_port, function() {

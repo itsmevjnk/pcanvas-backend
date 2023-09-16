@@ -80,5 +80,16 @@ module.exports = {
                 }
             });
         }
+    },
+
+    logout: function(req, resp) {
+        if(req.cookies.id === undefined || req.cookies.token === undefined)
+            resp.status(401).send(template(null, 'Not logged in'));
+        else
+            db.query("DELETE FROM " + config.database.prefix + "auth WHERE user_id = " + req.cookies.id + " AND auth_id = '" + req.cookies.token + "'", function(err, result, fields) {
+                resp.send(template({
+                    "success": (result.affectedRows != 0)
+                }))
+            });
     }
 };
