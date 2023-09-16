@@ -7,6 +7,10 @@
         "prefix": "pc_"
     },
 
+    "cors": {
+        "origin": ["http://localhost:5173"]
+    },
+
     "cooldown_timer": 15,
 
     "min_pw_length": 8,

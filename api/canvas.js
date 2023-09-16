@@ -2,6 +2,7 @@ var template = require('./template.js');
 var config = require('../config.json');
 var db = require('../database.js');
 var auth = require('./auth.js');
+var index = require('../index.js');
 
 var fn_check_cooldown = function(tab_name, id, callback) {
     db.query("SELECT p_time FROM " + tab_name + " ORDER BY p_time DESC LIMIT 1", function(p_err, p_result, p_fields) {
@@ -110,11 +111,18 @@ module.exports = {
                             }, 'User is under cooldown'));
                             else db.query("INSERT INTO " + id_result[0].tab_name + " (offset, color, user_id) VALUES (" + req.body.offset + ", " + req.body.color + ", " + req.cookies.id + ")", function(p_err, p_result, p_fields) {
                                 if(p_err) resp.status(500).send(template(null, p_err + ''));
-                                else resp.send(template({
-                                    "offset": req.body.offset,
-                                    "color": req.body.color,
-                                    "timer": (moderator) ? 0 : config.cooldown_timer
-                                }));
+                                else {
+                                    resp.send(template({
+                                        "offset": req.body.offset,
+                                        "color": req.body.color,
+                                        "timer": (moderator) ? 0 : config.cooldown_timer
+                                    }));
+                                    index.io.sockets.in(id).emit('place', {
+                                        "offset": req.body.offset,
+                                        "color": req.body.color,
+                                        "user": parseInt(req.cookies.id)
+                                    });
+                                }
                             });
                         });
                     });
