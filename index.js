@@ -25,6 +25,8 @@ app.delete('/utils/ping', utils.ping);
 
 var canvas = require('./api/canvas.js');
 app.get('/canvas/list', canvas.list);
+app.get('/canvas/info', canvas.info);
+app.get('/canvas/:id/info', canvas.info);
 app.get('/canvas/:id/fetch', canvas.fetch);
 app.get('/canvas/:id/history/:offset', canvas.history);
 app.get('/canvas/:id/cooldown', canvas.cooldown);

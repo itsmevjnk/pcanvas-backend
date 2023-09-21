@@ -28,6 +28,19 @@ module.exports = {
         });
     },
 
+    info: function(req, resp) {
+        let id = NaN;
+        if(req.params.id !== undefined) id = parseInt(req.params.id);
+        else if(req.cookies.canvas !== undefined) id = parseInt(req.cookies.canvas);
+
+        if(isNaN(id)) resp.status(400).send(template(null, 'Valid canvas ID not given'));
+        else db.query("SELECT canvas_id AS 'id', disp_name AS 'name', width, height, c_date AS 'date', is_read_only AS 'readonly' FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(err, result, fields) {
+            if(err) resp.status(500).send(template(null, err + ''));
+            else if(result.length == 0) resp.status(404).send(template(null, 'Canvas not found'));
+            else resp.send(template(result[0]));
+        });
+    },
+
     fetch: function(req, resp) {
         let query_params = '';
         if(req.params.id === 'latest')
