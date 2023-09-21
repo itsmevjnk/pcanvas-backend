@@ -1,11 +1,10 @@
-var config = require('./config.json');
 var mysql = require('mysql');
 
 const db = mysql.createConnection({
-    host: config.database.host,
-    user: config.database.user,
-    password: config.database.password,
-    database: config.database.schema
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_SCHEMA
 });
 db.connect(function(error) {
     if(!!error) console.log('Cannot connect to database:', error);

@@ -1,6 +1,10 @@
+var dotenv = require('dotenv');
+dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
+
 var cors = require('cors');
 var compression = require('compression');
-var cookie_parser = require('cookie-parser')
+var cookie_parser = require('cookie-parser');
 
 var config = require('./config.json');
 var db = require('./database.js');

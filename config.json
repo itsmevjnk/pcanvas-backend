@@ -1,12 +1,4 @@
 {
-    "database": {
-        "host": "localhost",
-        "user": "pcanvas",
-        "password": "P@55w0rd",
-        "schema": "pcanvas",
-        "prefix": "pc_"
-    },
-
     "cors": {
         "origin": ["http://localhost:5173"]
     },

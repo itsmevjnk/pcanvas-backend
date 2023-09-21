@@ -6,7 +6,7 @@ var crypto = require('node:crypto');
 module.exports = {
     verify_login: function(cookies, callback) {
         if(cookies.id === undefined || cookies.token === undefined) callback(false);
-        else db.query("SELECT a.user_id, u.moderator FROM " + config.database.prefix + "auth a JOIN " + config.database.prefix + "users u ON a.user_id = u.user_id WHERE a.user_id = " + cookies.id + " AND a.auth_id = '" + cookies.token + "'", function(err, result, fields) {
+        else db.query("SELECT a.user_id, u.moderator FROM " + process.env.DB_PREFIX + "auth a JOIN " + process.env.DB_PREFIX + "users u ON a.user_id = u.user_id WHERE a.user_id = " + cookies.id + " AND a.auth_id = '" + cookies.token + "'", function(err, result, fields) {
             if(err) throw err;
             else callback((result.length > 0), ((result.length > 0) && (result[0].moderator == 1)));
         });
@@ -20,7 +20,7 @@ module.exports = {
         // console.log(user, password);
         
         /* retrieve user id and match password */
-        db.query("SELECT user_id AS id, user_name AS user, pswd_hash AS password, moderator FROM " + config.database.prefix + "users WHERE user_name = '" + user + "' OR email = '" + user.toLowerCase() + "'", function(u_err, u_result, u_fields) {
+        db.query("SELECT user_id AS id, user_name AS user, pswd_hash AS password, moderator FROM " + process.env.DB_PREFIX + "users WHERE user_name = '" + user + "' OR email = '" + user.toLowerCase() + "'", function(u_err, u_result, u_fields) {
             if(u_err) resp.status(500).send(template(null, u_err + ''));
             else if(u_result.length == 0 || u_result[0].password != password) resp.status(403).send(template(null, 'Invalid credentials'));
             else {
@@ -30,14 +30,14 @@ module.exports = {
                     var uuid = crypto.randomUUID();
                     // console.log('Searching for existing token', uuid);
                     /* check if UUID already exists */
-                    db.query("SELECT auth_id FROM " + config.database.prefix + "auth WHERE auth_id = '" + uuid + "' AND user_id = " + u_result[0].id, function(s_err, s_result, s_fields) {
+                    db.query("SELECT auth_id FROM " + process.env.DB_PREFIX + "auth WHERE auth_id = '" + uuid + "' AND user_id = " + u_result[0].id, function(s_err, s_result, s_fields) {
                         if(s_err) resp.status(500).send(template(null, s_err + ''));
                         else if(s_result.length > 0) handle_token_search();
                         else {
                             /* jackpot! */
                             // console.log('Searching completed');
                             let ua = req.get('User-Agent') || '';
-                            db.query("INSERT INTO " + config.database.prefix + "auth (auth_id, user_id, ip, user_agent) VALUES ('" + uuid + "', " + u_result[0].id + ", '" + req.ip + "', '" + ua.substring(0, 256) + "')", function(i_err, i_result, i_fields) {
+                            db.query("INSERT INTO " + process.env.DB_PREFIX + "auth (auth_id, user_id, ip, user_agent) VALUES ('" + uuid + "', " + u_result[0].id + ", '" + req.ip + "', '" + ua.substring(0, 256) + "')", function(i_err, i_result, i_fields) {
                                 if(i_err) resp.status(500).send(template(null, i_err + ''));
                                 else resp.send(template({
                                     "token": uuid,
@@ -63,9 +63,9 @@ module.exports = {
         else {
             let query_str = '';
             if(req.cookies.token !== undefined && parseInt(req.cookies.id) === id)
-                query_str = "SELECT user_name AS user, email, moderator, (user_id IN (SELECT user_id FROM " + config.database.prefix + "auth WHERE auth_id = '" + req.cookies.token + "')) AS login FROM " + config.database.prefix + "users WHERE user_id = " + id;
+                query_str = "SELECT user_name AS user, email, moderator, (user_id IN (SELECT user_id FROM " + process.env.DB_PREFIX + "auth WHERE auth_id = '" + req.cookies.token + "')) AS login FROM " + process.env.DB_PREFIX + "users WHERE user_id = " + id;
             else
-                query_str = "SELECT user_name AS user, email, moderator FROM " + config.database.prefix + "users WHERE user_id = " + id;
+                query_str = "SELECT user_name AS user, email, moderator FROM " + process.env.DB_PREFIX + "users WHERE user_id = " + id;
             db.query(query_str, function(err, result, fields) {
                 if(err) resp.status(500).send(template(null, s_err + ''));
                 else if(result.length == 0) resp.status(404).send(template(null, 'Invalid user ID'));
@@ -86,7 +86,7 @@ module.exports = {
         if(req.cookies.id === undefined || req.cookies.token === undefined)
             resp.status(401).send(template(null, 'Not logged in'));
         else
-            db.query("DELETE FROM " + config.database.prefix + "auth WHERE user_id = " + req.cookies.id + " AND auth_id = '" + req.cookies.token + "'", function(err, result, fields) {
+            db.query("DELETE FROM " + process.env.DB_PREFIX + "auth WHERE user_id = " + req.cookies.id + " AND auth_id = '" + req.cookies.token + "'", function(err, result, fields) {
                 resp.send(template({
                     "success": (result.affectedRows != 0)
                 }))
@@ -98,7 +98,7 @@ module.exports = {
         let email = (req.query.email === undefined) ? null : req.query.email.toLowerCase();
         
         if(user === null && email === null) resp.send(template({})); // nothing to check
-        else db.query("SELECT user_name AS user, email FROM " + config.database.prefix + "users WHERE "
+        else db.query("SELECT user_name AS user, email FROM " + process.env.DB_PREFIX + "users WHERE "
                     + ((user !== null) ? ("user_name = '" + user + "'") : "")
                     + ((user !== null && email !== null) ? " OR " : "")
                     + ((email !== null) ? ("email = '" + email + "'") : ""), function(err, result, fields) {
@@ -123,25 +123,25 @@ module.exports = {
             resp.status(400).send(template(null, 'Password length is below minimum requirement'));
         else {
             let password = crypto.createHash('sha256').update(req.body.password).digest('hex');
-            db.query("INSERT INTO " + config.database.prefix + "users (user_name, email, pswd_hash) VALUES ('" + req.body.user + "', '" + req.body.email.toLowerCase() + "', '" + password + "')", function(i_err, i_result, i_fields) {
+            db.query("INSERT INTO " + process.env.DB_PREFIX + "users (user_name, email, pswd_hash) VALUES ('" + req.body.user + "', '" + req.body.email.toLowerCase() + "', '" + password + "')", function(i_err, i_result, i_fields) {
                 if(i_err) {
                     /* registration failed, let's figure out why */
                     if(i_err.code == 'ER_DUP_ENTRY') {
                         /* duplicate field */
-                        let field = (i_err + '').replace(new RegExp("^.*\\'" + config.database.prefix + "users\\.", 'g'), "").replaceAll("'", "");
+                        let field = (i_err + '').replace(new RegExp("^.*\\'" + process.env.DB_PREFIX + "users\\.", 'g'), "").replaceAll("'", "");
                         resp.status(403).send(template({
                             "field": (field == "user_name") ? "user" : "email"
                         }, 'Duplicate field'));
                     } else resp.status(500).send(template(null, i_err + '')); // unknown error, so let's just send it back to the source
                 } else {
                     /* registration completed, let's get the user logged in */
-                    db.query("SELECT user_id AS id, moderator FROM " + config.database.prefix + "users WHERE user_name = '" + req.body.user + "'", function(id_err, id_result, id_fields) {
+                    db.query("SELECT user_id AS id, moderator FROM " + process.env.DB_PREFIX + "users WHERE user_name = '" + req.body.user + "'", function(id_err, id_result, id_fields) {
                         if(id_err) resp.status(500).send(template(null, id_err + ''));
                         else {
                             /* we now have the user ID, now we only need to create a token */
                             let token = crypto.randomUUID(); // we don't need to bother with duplicate checking since this will be the first entry for the user anyway
                             let ua = req.get('User-Agent') || '';
-                            db.query("INSERT INTO " + config.database.prefix + "auth (auth_id, user_id, ip, user_agent) VALUES ('" + token + "', " + id_result[0].id + ", '" + req.ip + "', '" + ua.substring(0, 256) + "')", function(a_err, a_result, a_fields) {
+                            db.query("INSERT INTO " + process.env.DB_PREFIX + "auth (auth_id, user_id, ip, user_agent) VALUES ('" + token + "', " + id_result[0].id + ", '" + req.ip + "', '" + ua.substring(0, 256) + "')", function(a_err, a_result, a_fields) {
                                 if(a_err) resp.status(500).send(template(null, a_err + ''));
                                 else resp.send(template({
                                     "token": token,
