@@ -9,7 +9,7 @@ var fn_check_cooldown = function(tab_name, id, callback) {
         if(p_err) throw err;
         else db.query("SELECT moderator FROM " + config.database.prefix + "users WHERE user_id = " + id, function(m_err, m_result, m_fields) {
             if(m_err) throw err;
-            else if(m_result[0].moderator == 1) callback(0);
+            else if(m_result[0].moderator == 1 || p_result.length == 0) callback(0);
             else callback(Math.max(0, (new Date(p_result[0].p_time).getTime() - Date.now()) / 1000 + config.cooldown_timer));
         });
     });
