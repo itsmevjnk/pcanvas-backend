@@ -54,7 +54,9 @@ let http_server = app.listen(listen_port, function() {
 var io = require('socket.io')(http_server, {
     cors: {
         origin: config.cors.origin
-    }
+    },
+
+    path: api_prefix + '/socket.io'
 });
 
 io.sockets.on('connection', function(client) {
