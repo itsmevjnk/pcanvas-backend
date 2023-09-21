@@ -9,13 +9,25 @@ var cookie_parser = require('cookie-parser');
 var config = require('./config.json');
 var db = require('./database.js');
 
+/* figure out local IP addresses */
+var { networkInterfaces } = require('os');
+var nets = networkInterfaces();
+
+let cors_hosts = [];
+for(const interface of Object.values(nets)) {
+    for(const info of interface) {
+        cors_hosts.push('http://' + info.address + ':5173');
+    }
+}
+cors_hosts = cors_hosts.concat(config.cors.origin);
+
 var express = require('express');
 var app = express();
 app.use(compression());
 app.use(express.json());
 app.use(cors({
     credentials: true,
-    origin: config.cors.origin
+    origin: cors_hosts
 }));
 app.use(cookie_parser());
 
@@ -53,7 +65,7 @@ let http_server = app.listen(listen_port, function() {
 
 var io = require('socket.io')(http_server, {
     cors: {
-        origin: config.cors.origin
+        origin: cors_hosts
     }
 });
 
