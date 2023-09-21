@@ -37,6 +37,7 @@ CREATE TABLE pc_canvas_list (
     tab_name            VARCHAR(255)    NOT NULL	UNIQUE,
     width               INT             NOT NULL    DEFAULT         (1024),
     height              INT             NOT NULL    DEFAULT         (1024),
+    is_read_only        BOOLEAN         NOT NULL    DEFAULT         (FALSE),
     
     PRIMARY KEY         (canvas_id)
 );

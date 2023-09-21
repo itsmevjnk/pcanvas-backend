@@ -18,10 +18,13 @@ var fn_check_cooldown = function(tab_name, id, callback) {
 module.exports = {
     list: function(req, resp) {
         let limit = (req.query.limit === undefined) ? NaN : parseInt(req.query.limit);
-        db.query("SELECT canvas_id AS 'id', disp_name AS 'name', width, height, c_date AS 'date' FROM " + config.database.prefix + "canvas_list ORDER BY c_date DESC"
+        db.query("SELECT canvas_id AS 'id', disp_name AS 'name', width, height, c_date AS 'date', is_read_only AS 'readonly' FROM " + config.database.prefix + "canvas_list ORDER BY c_date DESC"
                 + ((!isNaN(limit)) ? (" LIMIT " + limit) : ""), function(err, result, fields) {
             if(err) resp.status(500).send(template(null, err + ''));
-            else resp.send(template(result));
+            else {
+                result.forEach((r) => r.readonly = Boolean(r.readonly));
+                resp.send(template(result));
+            }
         });
     },
 
@@ -101,7 +104,7 @@ module.exports = {
                 else {
                     let id = parseInt(req.params.id);
                     if(isNaN(id)) resp.status(400).send(template(null, 'Invalid canvas ID'));
-                    else db.query("SELECT tab_name, width, height FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(id_err, id_result, id_fields) {
+                    else db.query("SELECT tab_name, width, height, is_read_only AS 'readonly' FROM " + config.database.prefix + "canvas_list WHERE canvas_id = " + id, function(id_err, id_result, id_fields) {
                         if(id_err) resp.status(500).send(template(null, id_err + ''));
                         else if(id_result.length == 0) resp.status(404).send(template(null, 'Invalid canvas ID'));
                         else if(req.body.offset < 0 || req.body.offset >= id_result[0].width * id_result[0].height) resp.status(404).send(template(null, 'Invalid offset'));
@@ -109,7 +112,9 @@ module.exports = {
                             if(timer > 0) resp.status(403).send(template({
                                 "timer": timer
                             }, 'User is under cooldown'));
-                            else db.query("INSERT INTO " + id_result[0].tab_name + " (offset, color, user_id) VALUES (" + req.body.offset + ", " + req.body.color + ", " + req.cookies.id + ")", function(p_err, p_result, p_fields) {
+                            else if(id_result[0].readonly && !moderator) {
+                                resp.status(403).send(template(null, 'Canvas is read-only'));
+                            } else db.query("INSERT INTO " + id_result[0].tab_name + " (offset, color, user_id) VALUES (" + req.body.offset + ", " + req.body.color + ", " + req.cookies.id + ")", function(p_err, p_result, p_fields) {
                                 if(p_err) resp.status(500).send(template(null, p_err + ''));
                                 else {
                                     resp.send(template({
