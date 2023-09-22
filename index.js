@@ -20,6 +20,7 @@ for(const interface of Object.values(nets)) {
     }
 }
 cors_hosts = cors_hosts.concat(config.cors.origin);
+console.log('CORS origin(s):', cors_hosts);
 
 var express = require('express');
 var app = express();
