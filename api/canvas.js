@@ -57,7 +57,7 @@ module.exports = {
                 let name = id_result[0].tab_name;
                 let start = (req.query.start === undefined || isNaN(parseFloat(req.query.start))) ? '' : new Date(parseFloat(req.query.start) * 1000).toISOString();
                 // console.log(start);
-                db.query("SELECT c.offset, c.color FROM " + name + " c, (SELECT offset, max(p_time) AS p_time FROM " + name + " GROUP BY offset) lt WHERE c.offset = lt.offset AND c.p_time = lt.p_time" + ((start !== '') ? (" AND c.p_time > '" + start + "'") : ""), function(p_err, p_result, p_fields) {
+                db.query("SELECT c.`offset`, c.color FROM " + name + " c, (SELECT `offset`, max(p_time) AS p_time FROM " + name + " GROUP BY `offset`) lt WHERE c.`offset` = lt.`offset` AND c.p_time = lt.p_time" + ((start !== '') ? (" AND c.p_time > '" + start + "'") : ""), function(p_err, p_result, p_fields) {
                     if(p_err) resp.status(500).send(template(null, p_err + ''));
                     else resp.send(template(p_result, (req.params.id === 'latest') ? id_result[0].id : null));
                 });
@@ -78,7 +78,7 @@ module.exports = {
                 let name = id_result[0].tab_name;
                 let depth = (req.query.depth === undefined) ? NaN : parseFloat(req.query.depth);
 
-                db.query("SELECT p_time AS 'time', color, user_id AS 'user' FROM " + name + " WHERE offset = " + offset + " ORDER BY p_time DESC" + ((isNaN(depth)) ? "" : (" LIMIT " + depth)), function(p_err, p_result, p_fields) {
+                db.query("SELECT p_time AS 'time', color, user_id AS 'user' FROM " + name + " WHERE `offset` = " + offset + " ORDER BY p_time DESC" + ((isNaN(depth)) ? "" : (" LIMIT " + depth)), function(p_err, p_result, p_fields) {
                     if(p_err) resp.status(500).send(template(null, p_err + ''));
                     else resp.send(template(p_result));
                 });
@@ -127,7 +127,7 @@ module.exports = {
                             }, 'User is under cooldown'));
                             else if(id_result[0].readonly && !moderator) {
                                 resp.status(403).send(template(null, 'Canvas is read-only'));
-                            } else db.query("INSERT INTO " + id_result[0].tab_name + " (offset, color, user_id) VALUES (" + req.body.offset + ", " + req.body.color + ", " + req.cookies.id + ")", function(p_err, p_result, p_fields) {
+                            } else db.query("INSERT INTO " + id_result[0].tab_name + " (`offset`, color, user_id) VALUES (" + req.body.offset + ", " + req.body.color + ", " + req.cookies.id + ")", function(p_err, p_result, p_fields) {
                                 if(p_err) resp.status(500).send(template(null, p_err + ''));
                                 else {
                                     resp.send(template({
